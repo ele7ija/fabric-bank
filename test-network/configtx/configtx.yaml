@@ -141,7 +141,7 @@ Organizations:
         Policies:
             Readers:
                 Type: Signature
-                Rule: "OR('Org4MSP.admin', 'Org3MSP.peer', 'Org4MSP.client')"
+                Rule: "OR('Org4MSP.admin', 'Org4MSP.peer', 'Org4MSP.client')"
             Writers:
                 Type: Signature
                 Rule: "OR('Org4MSP.admin', 'Org4MSP.client')"

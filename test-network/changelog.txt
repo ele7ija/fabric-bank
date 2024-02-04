@@ -1,8 +1,9 @@
 NETWORK.SH
-	==DATABASE="couchdb" changed to "leveldb"
+	==DATABASE="leveldb" changed to "couchdb"
 		
 	==createOrgs
 		-Currently using "Crypto", should be changed to certificate authority
+		-Changed to "Certificate Authority"
 		
 	==createConsortium
 		-Nothing for now, possible name changes (TwoOrgsOrdererGenesis for example)
@@ -37,6 +38,7 @@ CONFIGTX.YAML
 	==added &Org3 and 4
 	==In Orderer, changed BatchTimeout to 1 second and MaxMessageCount to 2
 	==In TwoOrgsOrdererGenesis TwoOrgsChannel, added organizations.
+	==Fixed error on line 144(currently)  Rule: "OR('Org4MSP.admin', 'Org4MSP.peer', 'Org4MSP.client')", changed Org3MSP.peer to Org4MSP.peer
 	
 DOCKER-COMPOSE-TEST-NET.YAML
 	==Manually added all 16 peers, ports adjusted (7051, 7052, 7053 and 7055 because 7054 is currently used in docker-compose-ca)
@@ -63,6 +65,12 @@ CREATECHANNEL.SH
 SETANCHORPEER.SH
 	==createAnchorPeerUpdate
 		-Adjusted HOST and PORT
+
+DOCKER-COMPOSE-CA.YAML
+	==Added organizations, changed ports (ca_orderer 6054 and 16054, organizations 7-17 8-18 9-19 10-20)
+
+REGISTERENROLL.SH
+	==Added functions for generating Organizations and Peers of organization
 
 
 
