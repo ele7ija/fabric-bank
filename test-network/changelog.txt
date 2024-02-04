@@ -1,0 +1,69 @@
+NETWORK.SH
+	==DATABASE="couchdb" changed to "leveldb"
+		
+	==createOrgs
+		-Currently using "Crypto", should be changed to certificate authority
+		
+	==createConsortium
+		-Nothing for now, possible name changes (TwoOrgsOrdererGenesis for example)
+		
+	==networkUp
+		-Changes is checkPrereqs, createOrgs and createConsortium.
+		
+	==createChannel
+		-Nothing for now
+	
+	==deployCC
+		-TODO
+	
+	==networkDown
+		-Added deletion of added containers (couchdbs and new peers)
+		
+		
+CCP-GENERATE.SH
+	==Added P1PORT, P2PORT, P3PORT
+	==Changed yaml_cpp and json_cpp functions
+
+CCP-TEMPLATE.YAML
+	==Changed so that it fits ccp-generate.sh changes
+	
+CCP-TEMPLATE.JSON
+	==same as yaml
+	
+CRYPTO-CONFIG-ORG#.YAML
+	==added org3 and org4, changed count to 4.
+	
+CONFIGTX.YAML
+	==added &Org3 and 4
+	==In Orderer, changed BatchTimeout to 1 second and MaxMessageCount to 2
+	==In TwoOrgsOrdererGenesis TwoOrgsChannel, added organizations.
+	
+DOCKER-COMPOSE-TEST-NET.YAML
+	==Manually added all 16 peers, ports adjusted (7051, 7052, 7053 and 7055 because 7054 is currently used in docker-compose-ca)
+	
+DOCKER-COMPOSE-COUCH.YAML
+	==Added couch and peer combinations for each peer
+
+
+ENVVAR.SH
+	==Na pocetku fajla, dodati putevi za sve peerove
+	==setGlobals()
+		-Added $2 parameter, peer number in organization
+	==setGlobalsCli()
+		-Added $2, like setGlobals()
+	==parsePeerConnectionParameters
+		-TODO, needed for deployCC
+
+CREATECHANNEL.SH
+	==joinChannel
+		-Added $2  (peer)
+	==Added join for every peer
+	==All peers are anchor peers currently
+	
+SETANCHORPEER.SH
+	==createAnchorPeerUpdate
+		-Adjusted HOST and PORT
+
+
+
+
