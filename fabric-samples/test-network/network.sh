@@ -216,11 +216,19 @@ function createOrgs() {
 
     infoln "Creating Org1 Identities"
 
-    createOrg1
+    generateOrg 1 7054
 
     infoln "Creating Org2 Identities"
 
-    createOrg2
+    generateOrg 2 8054
+
+    infoln "Creating Org3 Identities"
+
+    generateOrg 3 9054
+
+    infoln "Creating Org4 Identities"
+
+    generateOrg 4 10054
 
     infoln "Creating Orderer Org Identities"
 
@@ -228,7 +236,7 @@ function createOrgs() {
 
   fi
 
-  infoln "Generating CCP files for Org1 and Org2"
+  infoln "Generating CCP files for Org1, Org2, Org3 and Org4"
   ./organizations/ccp-generate.sh
 }
 
@@ -367,7 +375,7 @@ function networkDown() {
 # native binaries for your platform, e.g., darwin-amd64 or linux-amd64
 OS_ARCH=$(echo "$(uname -s | tr '[:upper:]' '[:lower:]' | sed 's/mingw64_nt.*/windows/')-$(uname -m | sed 's/x86_64/amd64/g')" | awk '{print tolower($0)}')
 # Using crpto vs CA. default is cryptogen
-CRYPTO="cryptogen"
+CRYPTO="Certificate Authorities"
 # timeout duration - the duration the CLI should wait for a response from
 # another container before giving up
 MAX_RETRY=5
