@@ -1,0 +1,8 @@
+# Platform-specific binaries.
+/bin
+/config
+
+# IDE dirs.
+.vscode
+.gradle
+.idea
