@@ -21,10 +21,8 @@ NETWORK.SH
 		
 		
 CCP-GENERATE.SH
-	==prekopirano i izmenjeno za org3 i org4, dodati P1PORT, P2PORT i P3PORT za nove peerove po org, portovi dodati za nove peerove, idu 1 2 3 4, osim za prvu org jer je 7054 vec zauzeto, valjda 7055 nije zauzeto i nece nista slomiti
-	==Sa 1 2 3 4 promenjeno svuda na 1 2 3 5
-	==Jel treba jos negde da se promeni ovo?
-	==Izmenjene funkcije yaml_ccp i json_ccp (dodani parametri za nove peerove)
+	==Added P1PORT, P2PORT, P3PORT
+	==Changed yaml_cpp and json_cpp functions
 
 CCP-TEMPLATE.YAML
 	==Changed so that it fits ccp-generate.sh changes
