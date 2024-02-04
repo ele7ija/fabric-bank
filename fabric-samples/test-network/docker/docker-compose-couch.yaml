@@ -11,15 +11,10 @@ networks:
 
 services:
   couchdb01:
+    extends:
+        file: common.yaml
+        service: couchdb-common
     container_name: couchdb01
-    image: couchdb:3.1.1
-    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
-    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
-    environment:
-      - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=adminpw
-    # Comment/Uncomment the port mapping if you want to hide/expose the CouchDB service,
-    # for example map it to utilize Fauxton User Interface in dev environments.
     ports:
       - "5984:5984"
     networks:
@@ -35,22 +30,20 @@ services:
       - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
       - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
     depends_on:
-      - couchdb01
+      couchdb01:
+        condition: service_healthy
+    # networks:
+    #   - test
       
   couchdb11:
+    extends:
+        file: common.yaml
+        service: couchdb-common
     container_name: couchdb11
-    image: couchdb:3.1.1
-    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
-    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
-    environment:
-      - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=adminpw
-    # Comment/Uncomment the port mapping if you want to hide/expose the CouchDB service,
-    # for example map it to utilize Fauxton User Interface in dev environments.
     ports:
       - "5985:5984"
-    networks:
-      - test
+    # networks:
+    #   - test
 
   peer1.org1.example.com:
     environment:
@@ -62,18 +55,14 @@ services:
       - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
       - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
     depends_on:
-      - couchdb11
+      couchdb11:
+        condition: service_healthy
       
   couchdb21:
+    extends:
+        file: common.yaml
+        service: couchdb-common
     container_name: couchdb21
-    image: couchdb:3.1.1
-    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
-    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
-    environment:
-      - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=adminpw
-    # Comment/Uncomment the port mapping if you want to hide/expose the CouchDB service,
-    # for example map it to utilize Fauxton User Interface in dev environments.
     ports:
       - "5986:5984"
     networks:
@@ -89,18 +78,14 @@ services:
       - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
       - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
     depends_on:
-      - couchdb21
+      couchdb21:
+        condition: service_healthy
       
   couchdb31:
+    extends:
+        file: common.yaml
+        service: couchdb-common
     container_name: couchdb31
-    image: couchdb:3.1.1
-    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
-    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
-    environment:
-      - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=adminpw
-    # Comment/Uncomment the port mapping if you want to hide/expose the CouchDB service,
-    # for example map it to utilize Fauxton User Interface in dev environments.
     ports:
       - "5987:5984"
     networks:
@@ -116,25 +101,19 @@ services:
       - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
       - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
     depends_on:
-      - couchdb31
+      couchdb31:
+        condition: service_healthy
       
 #ORG1 - END
 #ORG2 - START
 
   couchdb02:
+    extends:
+        file: common.yaml
+        service: couchdb-common
     container_name: couchdb02
-    image: couchdb:3.1.1
-    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
-    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
-    environment:
-      - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=adminpw
-    # Comment/Uncomment the port mapping if you want to hide/expose the CouchDB service,
-    # for example map it to utilize Fauxton User Interface in dev environments.
     ports:
       - "7984:5984"
-    networks:
-      - test
 
   peer0.org2.example.com:
     environment:
@@ -146,22 +125,16 @@ services:
       - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
       - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
     depends_on:
-      - couchdb02
+      couchdb02:
+        condition: service_healthy
       
   couchdb12:
+    extends:
+        file: common.yaml
+        service: couchdb-common
     container_name: couchdb12
-    image: couchdb:3.1.1
-    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
-    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
-    environment:
-      - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=adminpw
-    # Comment/Uncomment the port mapping if you want to hide/expose the CouchDB service,
-    # for example map it to utilize Fauxton User Interface in dev environments.
     ports:
       - "7985:5984"
-    networks:
-      - test
 
   peer1.org2.example.com:
     environment:
@@ -173,22 +146,16 @@ services:
       - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
       - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
     depends_on:
-      - couchdb12
+      couchdb12:
+        condition: service_healthy
       
   couchdb22:
+    extends:
+        file: common.yaml
+        service: couchdb-common
     container_name: couchdb22
-    image: couchdb:3.1.1
-    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
-    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
-    environment:
-      - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=adminpw
-    # Comment/Uncomment the port mapping if you want to hide/expose the CouchDB service,
-    # for example map it to utilize Fauxton User Interface in dev environments.
     ports:
       - "7986:5984"
-    networks:
-      - test
 
   peer2.org2.example.com:
     environment:
@@ -200,22 +167,16 @@ services:
       - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
       - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
     depends_on:
-      - couchdb22
+      couchdb22:
+        condition: service_healthy
       
   couchdb32:
+    extends:
+        file: common.yaml
+        service: couchdb-common
     container_name: couchdb32
-    image: couchdb:3.1.1
-    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
-    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
-    environment:
-      - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=adminpw
-    # Comment/Uncomment the port mapping if you want to hide/expose the CouchDB service,
-    # for example map it to utilize Fauxton User Interface in dev environments.
     ports:
       - "7987:5984"
-    networks:
-      - test
 
   peer3.org2.example.com:
     environment:
@@ -227,25 +188,19 @@ services:
       - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
       - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
     depends_on:
-      - couchdb32
+      couchdb32:
+        condition: service_healthy
       
 #ORG2 - END
 #ORG3 - START
 
   couchdb03:
+    extends:
+        file: common.yaml
+        service: couchdb-common
     container_name: couchdb03
-    image: couchdb:3.1.1
-    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
-    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
-    environment:
-      - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=adminpw
-    # Comment/Uncomment the port mapping if you want to hide/expose the CouchDB service,
-    # for example map it to utilize Fauxton User Interface in dev environments.
     ports:
       - "9984:5984"
-    networks:
-      - test
 
   peer0.org3.example.com:
     environment:
@@ -257,22 +212,16 @@ services:
       - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
       - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
     depends_on:
-      - couchdb03
+      couchdb03:
+        condition: service_healthy
       
   couchdb13:
+    extends:
+        file: common.yaml
+        service: couchdb-common
     container_name: couchdb13
-    image: couchdb:3.1.1
-    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
-    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
-    environment:
-      - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=adminpw
-    # Comment/Uncomment the port mapping if you want to hide/expose the CouchDB service,
-    # for example map it to utilize Fauxton User Interface in dev environments.
     ports:
       - "9985:5984"
-    networks:
-      - test
 
   peer1.org3.example.com:
     environment:
@@ -284,22 +233,16 @@ services:
       - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
       - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
     depends_on:
-      - couchdb13
+      couchdb13:
+        condition: service_healthy
 
   couchdb23:
+    extends:
+        file: common.yaml
+        service: couchdb-common
     container_name: couchdb23
-    image: couchdb:3.1.1
-    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
-    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
-    environment:
-      - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=adminpw
-    # Comment/Uncomment the port mapping if you want to hide/expose the CouchDB service,
-    # for example map it to utilize Fauxton User Interface in dev environments.
     ports:
       - "9986:5984"
-    networks:
-      - test
 
   peer2.org3.example.com:
     environment:
@@ -311,22 +254,16 @@ services:
       - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
       - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
     depends_on:
-      - couchdb23
+      couchdb23:
+        condition: service_healthy
       
   couchdb33:
+    extends:
+        file: common.yaml
+        service: couchdb-common
     container_name: couchdb33
-    image: couchdb:3.1.1
-    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
-    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
-    environment:
-      - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=adminpw
-    # Comment/Uncomment the port mapping if you want to hide/expose the CouchDB service,
-    # for example map it to utilize Fauxton User Interface in dev environments.
     ports:
       - "9987:5984"
-    networks:
-      - test
 
   peer3.org3.example.com:
     environment:
@@ -338,25 +275,19 @@ services:
       - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
       - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
     depends_on:
-      - couchdb33
+      couchdb33:
+        condition: service_healthy
 
 #ORG3 - END
 #ORG4 - START
 
   couchdb04:
+    extends:
+        file: common.yaml
+        service: couchdb-common
     container_name: couchdb04
-    image: couchdb:3.1.1
-    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
-    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
-    environment:
-      - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=adminpw
-    # Comment/Uncomment the port mapping if you want to hide/expose the CouchDB service,
-    # for example map it to utilize Fauxton User Interface in dev environments.
     ports:
       - "11984:5984"
-    networks:
-      - test
 
   peer0.org4.example.com:
     environment:
@@ -368,22 +299,16 @@ services:
       - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
       - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
     depends_on:
-      - couchdb04
+      couchdb04:
+        condition: service_healthy
       
   couchdb14:
+    extends:
+        file: common.yaml
+        service: couchdb-common
     container_name: couchdb14
-    image: couchdb:3.1.1
-    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
-    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
-    environment:
-      - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=adminpw
-    # Comment/Uncomment the port mapping if you want to hide/expose the CouchDB service,
-    # for example map it to utilize Fauxton User Interface in dev environments.
     ports:
       - "11985:5984"
-    networks:
-      - test
 
   peer1.org4.example.com:
     environment:
@@ -395,22 +320,16 @@ services:
       - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
       - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
     depends_on:
-      - couchdb14
+      couchdb14:
+        condition: service_healthy
       
   couchdb24:
+    extends:
+        file: common.yaml
+        service: couchdb-common
     container_name: couchdb24
-    image: couchdb:3.1.1
-    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
-    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
-    environment:
-      - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=adminpw
-    # Comment/Uncomment the port mapping if you want to hide/expose the CouchDB service,
-    # for example map it to utilize Fauxton User Interface in dev environments.
     ports:
       - "11986:5984"
-    networks:
-      - test
 
   peer2.org4.example.com:
     environment:
@@ -422,22 +341,16 @@ services:
       - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
       - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
     depends_on:
-      - couchdb24
+      couchdb24:
+        condition: service_healthy
       
   couchdb34:
+    extends:
+        file: common.yaml
+        service: couchdb-common
     container_name: couchdb34
-    image: couchdb:3.1.1
-    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
-    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
-    environment:
-      - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=adminpw
-    # Comment/Uncomment the port mapping if you want to hide/expose the CouchDB service,
-    # for example map it to utilize Fauxton User Interface in dev environments.
     ports:
       - "11987:5984"
-    networks:
-      - test
 
   peer3.org4.example.com:
     environment:
@@ -449,6 +362,7 @@ services:
       - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
       - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
     depends_on:
-      - couchdb34
+      couchdb34:
+        condition: service_healthy
 
 #ORG4 - END
