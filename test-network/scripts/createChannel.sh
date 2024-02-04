@@ -47,7 +47,8 @@ createChannel() {
 joinChannel() {
   FABRIC_CFG_PATH=$PWD/../config/
   ORG=$1
-  setGlobals $ORG
+  PEER=${2:-0} #Dodato
+  setGlobals $ORG $PEER #Izmenjeno, dodato $PEER
 	local rc=1
 	local COUNTER=1
 	## Sometimes Join takes time, hence retry
@@ -66,7 +67,8 @@ joinChannel() {
 
 setAnchorPeer() {
   ORG=$1
-  docker exec cli ./scripts/setAnchorPeer.sh $ORG $CHANNEL_NAME 
+  PEER=${2:-0} #Dodato
+  docker exec cli ./scripts/setAnchorPeer.sh $ORG $CHANNEL_NAME $PEER #Dodat $PEER
 }
 
 FABRIC_CFG_PATH=${PWD}/configtx
@@ -84,15 +86,47 @@ createChannel
 successln "Channel '$CHANNEL_NAME' created"
 
 ## Join all the peers to the channel
-infoln "Joining org1 peer to the channel..."
-joinChannel 1
-infoln "Joining org2 peer to the channel..."
-joinChannel 2
+infoln "Joining org1 peers to the channel..." #Dodati peerovi 1 2 i 3
+joinChannel 1 0
+joinChannel 1 1
+joinChannel 1 2
+joinChannel 1 3
+infoln "Joining org2 peers to the channel..." #Dodati peerovi 1 2 i 3
+joinChannel 2 0
+joinChannel 2 1
+joinChannel 2 2
+joinChannel 2 3
+infoln "Joining org3 peers to the channel..." #DODATO, svi peerovi organizacije 3
+joinChannel 3 0
+joinChannel 3 1
+joinChannel 3 2
+joinChannel 3 3
+infoln "Joining org4 peers to the channel..." #DODATO, svi peerovi organizacije 4
+joinChannel 4 0
+joinChannel 4 1
+joinChannel 4 2
+joinChannel 4 3
 
 ## Set the anchor peers for each org in the channel
-infoln "Setting anchor peer for org1..."
-setAnchorPeer 1
-infoln "Setting anchor peer for org2..."
-setAnchorPeer 2
+infoln "Setting anchor peers for org1..." #Dodati peerovi 1 2 i 3, dodat peer ($2)
+setAnchorPeer 1 0
+setAnchorPeer 1 1
+setAnchorPeer 1 2
+setAnchorPeer 1 3
+infoln "Setting anchor peers for org2..."
+setAnchorPeer 2 0
+setAnchorPeer 2 1
+setAnchorPeer 2 2
+setAnchorPeer 2 3
+infoln "Setting anchor peers for org3..."
+setAnchorPeer 3 0
+setAnchorPeer 3 1
+setAnchorPeer 3 2
+setAnchorPeer 3 3
+infoln "Setting anchor peers for org4..."
+setAnchorPeer 4 0
+setAnchorPeer 4 1
+setAnchorPeer 4 2
+setAnchorPeer 4 3
 
 successln "Channel '$CHANNEL_NAME' joined"

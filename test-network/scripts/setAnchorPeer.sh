@@ -18,14 +18,77 @@ createAnchorPeerUpdate() {
   infoln "Generating anchor peer update transaction for Org${ORG} on channel $CHANNEL_NAME"
 
   if [ $ORG -eq 1 ]; then
-    HOST="peer0.org1.example.com"
-    PORT=7051
+    case $PEER in
+        0)
+            HOST="peer0.org1.example.com"
+            PORT=7051 ;;
+        1)
+            HOST="peer1.org1.example.com"
+            PORT=7052 ;;
+        2)
+            HOST="peer2.org1.example.com"
+            PORT=7053 ;;
+        3)
+            HOST="peer3.org1.example.com"
+            PORT=7055 ;;
+        *) echo "Invalid PEER_NUMBER" ;;
+    esac
+    #HOST="peer0.org1.example.com" Zamenjeno sa kodom iznad
+    #PORT=7051
   elif [ $ORG -eq 2 ]; then
-    HOST="peer0.org2.example.com"
-    PORT=9051
+    case $PEER in
+        0)
+            HOST="peer0.org2.example.com"
+            PORT=9051 ;;
+        1)
+            HOST="peer1.org2.example.com"
+            PORT=9052 ;;
+        2)
+            HOST="peer2.org2.example.com"
+            PORT=9053 ;;
+        3)
+            HOST="peer3.org2.example.com"
+            PORT=9055 ;;
+        *) echo "Invalid PEER_NUMBER" ;;
+    esac
+    #HOST="peer0.org2.example.com"
+    #PORT=9051
   elif [ $ORG -eq 3 ]; then
-    HOST="peer0.org3.example.com"
-    PORT=11051
+    case $PEER in
+        0)
+            HOST="peer0.org3.example.com"
+            PORT=11051 ;;
+        1)
+            HOST="peer1.org3.example.com"
+            PORT=11052 ;;
+        2)
+            HOST="peer2.org3.example.com"
+            PORT=11053 ;;
+        3)
+            HOST="peer3.org3.example.com"
+            PORT=11055 ;;
+        *) echo "Invalid PEER_NUMBER" ;;
+    esac
+    #HOST="peer0.org3.example.com"
+    #PORT=11051
+  elif [ $ORG -eq 4 ]; then
+    case $PEER in
+        0)
+            HOST="peer0.org4.example.com"
+            PORT=13051 ;;
+        1)
+            HOST="peer1.org4.example.com"
+            PORT=13052 ;;
+        2)
+            HOST="peer2.org4.example.com"
+            PORT=13053 ;;
+        3)
+            HOST="peer3.org4.example.com"
+            PORT=13055 ;;
+        *) echo "Invalid PEER_NUMBER" ;;
+    esac
+    #HOST="peer0.org4.example.com"
+    #PORT=13051
   else
     errorln "Org${ORG} unknown"
   fi
@@ -51,7 +114,8 @@ updateAnchorPeer() {
 
 ORG=$1
 CHANNEL_NAME=$2
-setGlobalsCLI $ORG
+PEER=${3:-0} #Dodato
+setGlobalsCLI $ORG $PEER #Dodat PEER
 
 createAnchorPeerUpdate 
 
