@@ -15,7 +15,7 @@ NETWORK.SH
 		-Nothing for now
 	
 	==deployCC
-		-TODO
+		-Implemented in deployCC script
 	
 	==networkDown
 		-Added deletion of added containers (couchdbs and new peers)
@@ -54,7 +54,7 @@ ENVVAR.SH
 	==setGlobalsCli()
 		-Added $2, like setGlobals()
 	==parsePeerConnectionParameters
-		-TODO, needed for deployCC
+		-Added all peers (in for loop)
 
 CREATECHANNEL.SH
 	==joinChannel
@@ -71,6 +71,11 @@ DOCKER-COMPOSE-CA.YAML
 
 REGISTERENROLL.SH
 	==Added functions for generating Organizations and Peers of organization
+
+DEPLOYCC.SH
+	==All required functions are now called for all peers
+
+
 
 
 

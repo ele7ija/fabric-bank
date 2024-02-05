@@ -177,14 +177,16 @@ parsePeerConnectionParameters() {
   PEER_CONN_PARMS=""
   PEERS=""
   while [ "$#" -gt 0 ]; do
-    setGlobals $1
-    PEER="peer0.org$1"
-    ## Set peer addresses
-    PEERS="$PEERS $PEER"
-    PEER_CONN_PARMS="$PEER_CONN_PARMS --peerAddresses $CORE_PEER_ADDRESS"
-    ## Set path to TLS certificate
-    TLSINFO=$(eval echo "--tlsRootCertFiles \$PEER0_ORG$1_CA")
-    PEER_CONN_PARMS="$PEER_CONN_PARMS $TLSINFO"
+    for ((i=0; i<4; i++)); do
+      setGlobals $1 $i
+      PEER="peer$i.org$1"
+      ## Set peer addresses
+      PEERS="$PEERS $PEER"
+      PEER_CONN_PARMS="$PEER_CONN_PARMS --peerAddresses $CORE_PEER_ADDRESS"
+      ## Set path to TLS certificate
+      TLSINFO=$(eval echo "--tlsRootCertFiles \$PEER${i}_ORG$1_CA")
+      PEER_CONN_PARMS="$PEER_CONN_PARMS $TLSINFO"
+    done
     # shift by one to get to the next organization
     shift
   done
