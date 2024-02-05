@@ -330,6 +330,7 @@ function createChannel() {
   # configtx.yaml is mounted in the cli container, which allows us to use it to
   # create the channel artifacts
   scripts/createChannel.sh $CHANNEL_NAME $CLI_DELAY $MAX_RETRY $VERBOSE
+  scripts/createChannel.sh $CHANNEL_NAME2 $CLI_DELAY $MAX_RETRY $VERBOSE
 }
 
 
@@ -383,6 +384,7 @@ MAX_RETRY=5
 CLI_DELAY=3
 # channel name defaults to "mychannel"
 CHANNEL_NAME="mychannel"
+CHANNEL_NAME2="secondchannel"
 # chaincode name defaults to "NA"
 CC_NAME="NA"
 # chaincode path defaults to "NA"

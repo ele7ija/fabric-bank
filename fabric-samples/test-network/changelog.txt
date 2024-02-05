@@ -12,7 +12,8 @@ NETWORK.SH
 		-Changes is checkPrereqs, createOrgs and createConsortium.
 		
 	==createChannel
-		-Nothing for now
+		-Added secondchannel
+		-second channel name defined in CHANNEL_NAME2
 	
 	==deployCC
 		-TODO
