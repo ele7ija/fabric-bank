@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/hyperledger/fabric-chaincode-go/shim"
@@ -356,8 +357,55 @@ func (s *SmartContract) depositMoney(APIstub shim.ChaincodeStubInterface, args [
 }
 
 func (s *SmartContract) withdrawMoney(APIstub shim.ChaincodeStubInterface, args []string) peer.Response {
-	// Implementirati...
-	return shim.Success(nil)
+	if len(args) != 5 {
+		return shim.Error("Withdraw money requires 4 arguemnts: bank id, user id, account id and amount")
+	}
+	bankId, err := uuid.Parse(args[0])
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	userId, err := uuid.Parse(args[1])
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	accountId, err := uuid.Parse(args[2])
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	amount, err := strconv.ParseFloat(args[3], 64)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	currency := args[3]
+	bankByte, err := APIstub.GetState(bankId.String())
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	var bank Bank
+	err = json.Unmarshal(bankByte, &bank)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	for _, user := range bank.Users {
+		if user.UserId == userId {
+			for _, account := range user.Receipts {
+				if account.AccountId == accountId {
+					if account.Currency != currency {
+						return shim.Error("Invalid currency")
+					}
+					if account.Amount < amount {
+						return shim.Error("Account does not have that amount of resources")
+					}
+					account.Amount -= amount
+					bankJson, _ := json.Marshal(bank)
+					APIstub.PutState(bank.BankId.String(), bankJson)
+					return shim.Success(nil)
+				}
+			}
+			return shim.Error("User not found")
+		}
+	}
+	return shim.Error("Bank not found")
 }
 
 func (s *SmartContract) transferMoney(APIstub shim.ChaincodeStubInterface, args []string) peer.Response {
