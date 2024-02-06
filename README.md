@@ -9,6 +9,15 @@ Autori:
 
 ## Pokretanje
 
+### POTREBNO KORISTITI GO 1.14
+
+```bash
+sudo apt-get install bison
+bash < <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer)
+gvm install go1.5 --binary
+gvm use go1.14
+```
+
 ```bash
 # Preuzmi potrebne Hyperledger fabric docker slike i preuzmi binarne fajlove i
 # prebaci ih u ./fabric-samples/bin i ./fabric-samples/config.
