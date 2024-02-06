@@ -3,6 +3,13 @@ module example.com/fabric-bank/chaincode
 go 1.21.1
 
 require (
+	github.com/google/uuid v1.6.0
+	github.com/hyperledger/fabric-chaincode-go v0.0.0-20230731094759-d626e9ab09b9
+	github.com/hyperledger/fabric-contract-api-go v1.2.2
+	github.com/hyperledger/fabric-protos-go v0.3.0
+)
+
+require (
 	github.com/go-openapi/jsonpointer v0.20.0 // indirect
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
 	github.com/go-openapi/spec v0.20.9 // indirect
@@ -11,11 +18,6 @@ require (
 	github.com/gobuffalo/packd v1.0.2 // indirect
 	github.com/gobuffalo/packr v1.30.1 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/google/uuid v1.6.0 // indirect
-	github.com/hyperledger/fabric-chaincode-go v0.0.0-20230731094759-d626e9ab09b9 // indirect
-	github.com/hyperledger/fabric-contract-api-go v1.2.2 // indirect
-	github.com/hyperledger/fabric-protos-go v0.3.0 // indirect
-	github.com/hyperledger/fabric-samples/asset-transfer-basic/chaincode-go v0.0.0-20231212141406-02d9f8c58b84 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
