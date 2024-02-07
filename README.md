@@ -14,7 +14,7 @@ Autori:
 ```bash
 sudo apt-get install bison
 bash < <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer)
-gvm install go1.5 --binary
+gvm install go1.14 --binary
 gvm use go1.14
 ```
 
