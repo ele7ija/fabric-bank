@@ -894,6 +894,7 @@ func makeMap() map[string]float64 {
 func (s *SmartContract) QueryUsers(ctx contractapi.TransactionContextInterface, name string, lastName string, email string, minReceiptsCount int) ([]*User, error) {
 	queryString := fmt.Sprintf(`{
         "selector": {
+			"UserId": {"$regex": "^user"},
             "Name": {"$regex": "%s"},
             "LastName": {"$regex": "%s"},
             "Email": {"$regex": "%s"},
