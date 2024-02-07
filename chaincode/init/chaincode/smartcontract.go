@@ -229,9 +229,9 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 		},
 		{
 			UserId:   "user5",
-			Name:     "Aleksandar",
+			Name:     "Nikolina",
 			LastName: "Vukovic",
-			Email:    "nmalinovic@gmail.com",
+			Email:    "nvukovic@gmail.com",
 			Receipts: []string{accounts[8].AccountId, accounts[9].AccountId},
 		},
 		{
