@@ -890,3 +890,37 @@ func makeMap() map[string]float64 {
 	currencies["NOK"] = 10.2950
 	return currencies
 }
+
+func (s *SmartContract) QueryUsers(ctx contractapi.TransactionContextInterface, name string, lastName string, email string, minReceiptsCount int) ([]*User, error) {
+	queryString := fmt.Sprintf(`{
+        "selector": {
+            "Name": {"$regex": "%s"},
+            "LastName": {"$regex": "%s"},
+            "Email": {"$regex": "%s"},
+            "Receipts": {"$size": {"$gte": %d}}
+        }
+    }`, name, lastName, email, minReceiptsCount)
+	queryResultsIterator, err := ctx.GetStub().GetQueryResult(queryString)
+	if err != nil {
+		return nil, fmt.Errorf("error executing query: %v", err)
+	}
+	defer queryResultsIterator.Close()
+	filteredUsers := []*User{}
+	for queryResultsIterator.HasNext() {
+		queryResult, err := queryResultsIterator.Next()
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving next query result: %v", err)
+		}
+
+		// Unmarshal the query result into a User struct
+		var user User
+		if err := json.Unmarshal(queryResult.Value, &user); err != nil {
+			return nil, fmt.Errorf("error unmarshalling user: %v", err)
+		}
+
+		// Append the user to the filteredUsers slice
+		filteredUsers = append(filteredUsers, &user)
+	}
+
+	return filteredUsers, nil
+}
