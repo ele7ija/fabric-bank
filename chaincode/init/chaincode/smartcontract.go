@@ -672,18 +672,18 @@ func (s *SmartContract) TransferMoney(ctx contractapi.TransactionContextInterfac
 	if err != nil {
 		return err
 	}
-
+	if accountFrom.Amount < amount {
+		return fmt.Errorf("Account does not have that amount of money")
+	}
+	amount_to := amount
 	if accountFrom.Currency != accountTo.Currency {
-		amount, err = TransferAmountToCurrency(amount, accountFrom.Currency, accountTo.Currency)
+		amount_to, err = TransferAmountToCurrency(amount, accountFrom.Currency, accountTo.Currency)
 		if err != nil {
 			return fmt.Errorf("Invalid currency")
 		}
 	}
-	if accountFrom.Amount < amount {
-		return fmt.Errorf("Account does not have that amount of money")
-	}
 	accountFrom.Amount -= amount
-	accountTo.Amount += amount
+	accountTo.Amount += amount_to
 	err = putAccount(ctx, accountFrom)
 	if err != nil {
 		return err
@@ -772,7 +772,7 @@ func (s *SmartContract) CreateAccount(ctx contractapi.TransactionContextInterfac
 		fmt.Errorf("Currency %s not found", currency)
 	}
 	new_account := Account{
-		AccountId: fmt.Sprintf("account%d", max_account),
+		AccountId: fmt.Sprintf("account%d", max_account+1),
 		Currency:  currency,
 		Amount:    0,
 		Cards:     []Card{Card{CardId: fmt.Sprintf("card%d", max_card+1)}, Card{fmt.Sprintf("card%d", max_card+2)}},
