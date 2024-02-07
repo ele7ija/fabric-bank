@@ -177,7 +177,7 @@ parsePeerConnectionParameters() {
   PEER_CONN_PARMS=""
   PEERS=""
   while [ "$#" -gt 0 ]; do
-    for ((i=0; i<4; i++)); do
+    for ((i=0; i<1; i++)); do
       setGlobals $1 $i
       PEER="peer$i.org$1"
       ## Set peer addresses

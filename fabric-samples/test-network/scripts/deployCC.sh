@@ -292,7 +292,7 @@ packageChaincode
 #infoln "Installing chaincode on peer0.org1..."
 #installChaincode 1
 for ORG in {1..4}; do
-    for PEER in {0..3}; do
+    for PEER in {0..0}; do
         infoln "Installing chaincode on peer${PEER}.org${ORG}..."
         installChaincode $ORG $PEER
     done
@@ -302,7 +302,7 @@ done
 ## query whether the chaincode is installed
 #queryInstalled 1
 for ORG in {1..4}; do
-    for PEER in {0..3}; do
+    for PEER in {0..0}; do
         #infoln "Installing chaincode on peer${PEER}.org${ORG}..."
         queryInstalled $ORG $PEER
     done
@@ -356,7 +356,7 @@ commitChaincodeDefinition 1 2 3 4
 #queryCommitted 1
 #queryCommitted 2
 for ORG in {1..4}; do
-    for PEER in {0..3}; do
+    for PEER in {0..0}; do
         #infoln "Installing chaincode on peer${PEER}.org${ORG}..."
         queryCommitted $ORG $PEER
     done
