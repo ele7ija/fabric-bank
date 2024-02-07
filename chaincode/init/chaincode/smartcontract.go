@@ -510,7 +510,7 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 		var asset Asset
 		err = json.Unmarshal(queryResponse.Value, &asset)
 		if err != nil {
-			return nil, err
+			continue
 		}
 		assets = append(assets, &asset)
 	}
@@ -535,10 +535,36 @@ func (s *SmartContract) GetAllBanks(ctx contractapi.TransactionContextInterface)
 		var bank Bank
 		err = json.Unmarshal(queryResponse.Value, &bank)
 		if err != nil {
-			return nil, err
+			continue
 		}
 		banks = append(banks, &bank)
 	}
 
 	return banks, nil
+}
+
+func (s *SmartContract) WithdrawMoney(ctx contractapi.TransactionContextInterface, accountId string, amount float64) error {
+	exists, err := s.AssetExists(ctx, accountId)
+	if exists {
+		return fmt.Errorf("Account does not exist")
+	}
+	accountJSON, err := ctx.GetStub().GetState(accountId)
+	if err != nil {
+		return fmt.Errorf("failed to read from world state: %v", err)
+	}
+	var account Account
+	err = json.Unmarshal(accountJSON, &account)
+	if err != nil {
+		return err
+	}
+	if account.Amount < amount {
+		return fmt.Errorf("Account does not have that amount of money")
+	}
+	account.Amount -= amount
+	accountJSON, err = json.Marshal(account)
+	if err != nil {
+		return err
+	}
+	ctx.GetStub().PutState(account.AccountId, accountJSON)
+	return nil
 }
