@@ -3,6 +3,8 @@ package chaincode
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
@@ -543,6 +545,31 @@ func (s *SmartContract) GetAllBanks(ctx contractapi.TransactionContextInterface)
 	return banks, nil
 }
 
+func (s *SmartContract) GetAllUsers(ctx contractapi.TransactionContextInterface) ([]*User, error) {
+	resultsIterator, err := ctx.GetStub().GetStateByRange("user1", "user99999")
+	if err != nil {
+		return nil, err
+	}
+	defer resultsIterator.Close()
+
+	var users []*User
+	for resultsIterator.HasNext() {
+		queryResponse, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		var user User
+		err = json.Unmarshal(queryResponse.Value, &user)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, &user)
+	}
+
+	return users, nil
+}
+
 func (s *SmartContract) GetAllAccounts(ctx contractapi.TransactionContextInterface) ([]*Account, error) {
 	resultsIterator, err := ctx.GetStub().GetStateByRange("account1", "account99999")
 	if err != nil {
@@ -566,6 +593,25 @@ func (s *SmartContract) GetAllAccounts(ctx contractapi.TransactionContextInterfa
 	}
 
 	return accounts, nil
+}
+
+func (s *SmartContract) GetAccount(ctx contractapi.TransactionContextInterface, id string) (*Account, error) {
+	exist, err := s.AssetExists(ctx, id)
+	if !exist {
+		return nil, fmt.Errorf("Account not found")
+	}
+	accountJSON, err := ctx.GetStub().GetState(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read from world state: %v", err)
+	}
+
+	var account Account
+	err = json.Unmarshal(accountJSON, &account)
+	if err != nil {
+		return nil, err
+	}
+
+	return &account, nil
 }
 
 func (s *SmartContract) WithdrawMoney(ctx contractapi.TransactionContextInterface, accountId string, amount float64) error {
@@ -592,4 +638,255 @@ func (s *SmartContract) WithdrawMoney(ctx contractapi.TransactionContextInterfac
 	}
 	ctx.GetStub().PutState(account.AccountId, accountJSON)
 	return nil
+}
+
+func (s *SmartContract) DepositMoney(ctx contractapi.TransactionContextInterface, accountId string, amount float64) error {
+	exists, err := s.AssetExists(ctx, accountId)
+	if !exists {
+		return fmt.Errorf("Account does not exist")
+	}
+	accountJSON, err := ctx.GetStub().GetState(accountId)
+	if err != nil {
+		return fmt.Errorf("failed to read from world state: %v", err)
+	}
+	var account Account
+	err = json.Unmarshal(accountJSON, &account)
+	if err != nil {
+		return err
+	}
+	account.Amount += amount
+	accountJSON, err = json.Marshal(account)
+	if err != nil {
+		return err
+	}
+	ctx.GetStub().PutState(account.AccountId, accountJSON)
+	return nil
+}
+
+func (s *SmartContract) TransferMoney(ctx contractapi.TransactionContextInterface, accountFromId string, accountToId string, amount float64) error {
+	accountFrom, err := s.GetAccount(ctx, accountFromId)
+	if err != nil {
+		return err
+	}
+	accountTo, err := s.GetAccount(ctx, accountToId)
+	if err != nil {
+		return err
+	}
+
+	if accountFrom.Currency != accountTo.Currency {
+		amount, err = TransferAmountToCurrency(amount, accountFrom.Currency, accountTo.Currency)
+		if err != nil {
+			return fmt.Errorf("Invalid currency")
+		}
+	}
+	if accountFrom.Amount < amount {
+		return fmt.Errorf("Account does not have that amount of money")
+	}
+	accountFrom.Amount -= amount
+	accountTo.Amount += amount
+	err = putAccount(ctx, accountFrom)
+	if err != nil {
+		return err
+	}
+	err = putAccount(ctx, accountTo)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *SmartContract) CreateUser(ctx contractapi.TransactionContextInterface, name string, lastName string, email string, bankId string) error {
+	users, err := s.GetAllUsers(ctx)
+	if err != nil {
+		return err
+	}
+	max := -1
+	for _, user := range users {
+		num, err := extractNumber("user", user.UserId)
+		if err != nil {
+			return err
+		}
+		if num > max {
+			max = num
+		}
+	}
+	bank, err := getBank(ctx, bankId)
+	if err != nil {
+		return err
+	}
+	for _, userId := range bank.Users {
+		user, err := getUser(ctx, userId)
+		if err != nil {
+			return nil
+		}
+		if user.Email == email {
+			return fmt.Errorf("Email already assigned to user in this bank")
+		}
+	}
+	new_user := User{
+		UserId:   fmt.Sprintf("user%d", max+1),
+		Name:     name,
+		LastName: lastName,
+		Email:    email,
+		Receipts: []string{},
+	}
+	err = putUser(ctx, &new_user)
+	if err != nil {
+		return err
+	}
+	bank.Users = append(bank.Users, new_user.UserId)
+	err = putBank(ctx, bank)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *SmartContract) CreateAccount(ctx contractapi.TransactionContextInterface, userId string, currency string) error {
+	accounts, err := s.GetAllAccounts(ctx)
+	if err != nil {
+		return err
+	}
+	max_card := -1
+	max_account := -1
+	for _, account := range accounts {
+		num_acc, err := extractNumber("account", account.AccountId)
+		if err != nil {
+			return err
+		}
+		if num_acc > max_account {
+			max_account = num_acc
+		}
+		for _, card := range account.Cards {
+			num, err := extractNumber("card", card.CardId)
+			if err != nil {
+				return err
+			}
+			if num > max_card {
+				max_card = num
+			}
+		}
+	}
+	_, ok := makeMap()[currency]
+	if !ok {
+		fmt.Errorf("Currency %s not found", currency)
+	}
+	new_account := Account{
+		AccountId: fmt.Sprintf("account%d", max_account),
+		Currency:  currency,
+		Amount:    0,
+		Cards:     []Card{Card{CardId: fmt.Sprintf("card%d", max_card+1)}, Card{fmt.Sprintf("card%d", max_card+2)}},
+	}
+	user, err := getUser(ctx, userId)
+	if err != nil {
+		return nil
+	}
+	user.Receipts = append(user.Receipts, new_account.AccountId)
+	err = putAccount(ctx, &new_account)
+	if err != nil {
+		return err
+	}
+	err = putUser(ctx, user)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func extractNumber(prefix string, s string) (int, error) {
+	s = strings.TrimPrefix(s, prefix)
+	num, err := strconv.Atoi(s)
+	if err != nil {
+		return 0, err
+	}
+	return num, nil
+}
+
+func putAccount(ctx contractapi.TransactionContextInterface, account *Account) error {
+	accountJSON, err := json.Marshal(account)
+	if err != nil {
+		return err
+	}
+	ctx.GetStub().PutState(account.AccountId, accountJSON)
+	return nil
+}
+
+func putBank(ctx contractapi.TransactionContextInterface, bank *Bank) error {
+	objJSON, err := json.Marshal(bank)
+	if err != nil {
+		return err
+	}
+	ctx.GetStub().PutState(bank.BankId, objJSON)
+	return nil
+}
+
+func putUser(ctx contractapi.TransactionContextInterface, user *User) error {
+	objJSON, err := json.Marshal(user)
+	if err != nil {
+		return err
+	}
+	ctx.GetStub().PutState(user.UserId, objJSON)
+	return nil
+}
+
+func getBank(ctx contractapi.TransactionContextInterface, id string) (*Bank, error) {
+	bankJSON, err := ctx.GetStub().GetState(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read from world state: %v", err)
+	}
+	if bankJSON == nil {
+		return nil, fmt.Errorf("Bank not found")
+	}
+	var bank Bank
+	err = json.Unmarshal(bankJSON, &bank)
+	if err != nil {
+		return nil, err
+	}
+	return &bank, nil
+}
+
+func getUser(ctx contractapi.TransactionContextInterface, id string) (*User, error) {
+	userJSON, err := ctx.GetStub().GetState(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read from world state: %v", err)
+	}
+	if userJSON == nil {
+		return nil, fmt.Errorf("User not found")
+	}
+	var user User
+	err = json.Unmarshal(userJSON, &user)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func TransferAmountToCurrency(amount float64, from string, to string) (float64, error) {
+	currencies := makeMap()
+	valueFrom, ok := currencies[from]
+	if !ok {
+		return -1, fmt.Errorf("Invalid currency")
+	}
+	valueTo, ok := currencies[to]
+	if !ok {
+		return -1, fmt.Errorf("Invalid currency")
+	}
+	return (valueFrom / valueTo) * amount, nil
+}
+
+func makeMap() map[string]float64 {
+	currencies := make(map[string]float64)
+	currencies["RSD"] = 1
+	currencies["EUR"] = 117.1672
+	currencies["AUD"] = 71.0492
+	currencies["CAD"] = 80.6770
+	currencies["CNY"] = 15.1375
+	currencies["CZK"] = 4.6982
+	currencies["DKK"] = 15.7035
+	currencies["HUF"] = 30.3173
+	currencies["INR"] = 1.3114
+	currencies["JPY"] = 73.5559
+	currencies["KWD"] = 353.4456
+	currencies["NOK"] = 10.2950
+	return currencies
 }
