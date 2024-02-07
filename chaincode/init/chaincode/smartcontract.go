@@ -543,9 +543,34 @@ func (s *SmartContract) GetAllBanks(ctx contractapi.TransactionContextInterface)
 	return banks, nil
 }
 
+func (s *SmartContract) GetAllAccounts(ctx contractapi.TransactionContextInterface) ([]*Account, error) {
+	resultsIterator, err := ctx.GetStub().GetStateByRange("account1", "account99999")
+	if err != nil {
+		return nil, err
+	}
+	defer resultsIterator.Close()
+
+	var accounts []*Account
+	for resultsIterator.HasNext() {
+		queryResponse, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		var account Account
+		err = json.Unmarshal(queryResponse.Value, &account)
+		if err != nil {
+			return nil, err
+		}
+		accounts = append(accounts, &account)
+	}
+
+	return accounts, nil
+}
+
 func (s *SmartContract) WithdrawMoney(ctx contractapi.TransactionContextInterface, accountId string, amount float64) error {
 	exists, err := s.AssetExists(ctx, accountId)
-	if exists {
+	if !exists {
 		return fmt.Errorf("Account does not exist")
 	}
 	accountJSON, err := ctx.GetStub().GetState(accountId)
