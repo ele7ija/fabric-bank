@@ -545,7 +545,7 @@ func (s *SmartContract) GetAllBanks(ctx contractapi.TransactionContextInterface)
 
 func (s *SmartContract) WithdrawMoney(ctx contractapi.TransactionContextInterface, accountId string, amount float64) error {
 	exists, err := s.AssetExists(ctx, accountId)
-	if exists {
+	if !exists {
 		return fmt.Errorf("Account does not exist")
 	}
 	accountJSON, err := ctx.GetStub().GetState(accountId)
