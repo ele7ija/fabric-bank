@@ -229,9 +229,9 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 		},
 		{
 			UserId:   "user5",
-			Name:     "Aleksandar",
+			Name:     "Nikolina",
 			LastName: "Vukovic",
-			Email:    "nmalinovic@gmail.com",
+			Email:    "nvukovic@gmail.com",
 			Receipts: []string{accounts[8].AccountId, accounts[9].AccountId},
 		},
 		{
@@ -889,4 +889,36 @@ func makeMap() map[string]float64 {
 	currencies["KWD"] = 353.4456
 	currencies["NOK"] = 10.2950
 	return currencies
+}
+
+func (s *SmartContract) QueryUsers(ctx contractapi.TransactionContextInterface, name string, lastName string, email string, minReceiptsCount int) ([]*User, error) {
+	queryString := fmt.Sprintf(`{
+        "selector": {
+			"UserId": {"$regex": "^user"},
+            "Name": {"$regex": "%s"},
+            "LastName": {"$regex": "%s"},
+            "Email": {"$regex": "%s"}
+        }
+    }`, name, lastName, email, minReceiptsCount)
+	queryResultsIterator, err := ctx.GetStub().GetQueryResult(queryString)
+	if err != nil {
+		return nil, fmt.Errorf("error executing query: %v", err)
+	}
+	defer queryResultsIterator.Close()
+	filteredUsers := []*User{}
+	for queryResultsIterator.HasNext() {
+		queryResult, err := queryResultsIterator.Next()
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving next query result: %v", err)
+		}
+		var user User
+		if err := json.Unmarshal(queryResult.Value, &user); err != nil {
+			return nil, fmt.Errorf("error unmarshalling user: %v", err)
+		}
+		if len(user.Receipts) >= minReceiptsCount {
+			filteredUsers = append(filteredUsers, &user)
+		}
+	}
+
+	return filteredUsers, nil
 }
