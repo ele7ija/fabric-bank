@@ -494,7 +494,7 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface) ([]*Asset, error) {
 	// range query with empty string for startKey and endKey does an
 	// open-ended query of all assets in the chaincode namespace.
-	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
+	resultsIterator, err := ctx.GetStub().GetStateByRange("asset1", "asset9999")
 	if err != nil {
 		return nil, err
 	}
@@ -510,7 +510,7 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 		var asset Asset
 		err = json.Unmarshal(queryResponse.Value, &asset)
 		if err != nil {
-			continue
+			return nil, err
 		}
 		assets = append(assets, &asset)
 	}
@@ -519,7 +519,7 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 }
 
 func (s *SmartContract) GetAllBanks(ctx contractapi.TransactionContextInterface) ([]*Bank, error) {
-	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
+	resultsIterator, err := ctx.GetStub().GetStateByRange("bank1", "bank99999")
 	if err != nil {
 		return nil, err
 	}
@@ -535,7 +535,7 @@ func (s *SmartContract) GetAllBanks(ctx contractapi.TransactionContextInterface)
 		var bank Bank
 		err = json.Unmarshal(queryResponse.Value, &bank)
 		if err != nil {
-			continue
+			return nil, err
 		}
 		banks = append(banks, &bank)
 	}
