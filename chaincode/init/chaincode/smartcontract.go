@@ -897,8 +897,7 @@ func (s *SmartContract) QueryUsers(ctx contractapi.TransactionContextInterface, 
 			"UserId": {"$regex": "^user"},
             "Name": {"$regex": "%s"},
             "LastName": {"$regex": "%s"},
-            "Email": {"$regex": "%s"},
-            "Receipts": {"$size": {"$gte": %d}}
+            "Email": {"$regex": "%s"}
         }
     }`, name, lastName, email, minReceiptsCount)
 	queryResultsIterator, err := ctx.GetStub().GetQueryResult(queryString)
@@ -912,15 +911,13 @@ func (s *SmartContract) QueryUsers(ctx contractapi.TransactionContextInterface, 
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving next query result: %v", err)
 		}
-
-		// Unmarshal the query result into a User struct
 		var user User
 		if err := json.Unmarshal(queryResult.Value, &user); err != nil {
 			return nil, fmt.Errorf("error unmarshalling user: %v", err)
 		}
-
-		// Append the user to the filteredUsers slice
-		filteredUsers = append(filteredUsers, &user)
+		if len(user.Receipts) >= minReceiptsCount {
+			filteredUsers = append(filteredUsers, &user)
+		}
 	}
 
 	return filteredUsers, nil
