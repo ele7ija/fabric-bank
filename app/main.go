@@ -9,10 +9,22 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
+    "bytes"
+    "encoding/json"
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
 	"github.com/hyperledger/fabric-sdk-go/pkg/gateway"
 )
+
+func Json(jsonData []byte) (string, error) {
+    var prettyJSON bytes.Buffer
+
+	err := json.Indent(&prettyJSON, jsonData, "", "\t")
+	if err != nil {
+		return "", err
+	}
+
+	return prettyJSON.String(), nil
+}
 
 func PopulateWallet(wallet *gateway.Wallet, org string) error {
     basePath := filepath.Join(
@@ -23,7 +35,7 @@ func PopulateWallet(wallet *gateway.Wallet, org string) error {
 		"peerOrganizations",
 		org + ".example.com",
 		"users",
-		"User1@org1.example.com",
+		"User1@" + org + ".example.com",
 		"msp",
     )
 
@@ -136,8 +148,13 @@ func main(){
     })
 
     http.HandleFunc("/api/initledger", func(w http.ResponseWriter, r *http.Request){
-        channel := "mychannel"
-        org := "org1"
+        err := r.ParseForm()
+        if err != nil {
+            log.Println(err)
+            fmt.Fprintf(w, "Error: %s", err)
+        }
+        channel := r.Form.Get("channel")
+        org := r.Form.Get("org")
         contract, err := GetContract(wallet, chaincodeName, org, channel)
         if err != nil{
             log.Println(err)
@@ -157,6 +174,101 @@ func main(){
         fmt.Fprintf(w, "Success")
     })
 
+    http.HandleFunc("/api/get/users", func(w http.ResponseWriter, r *http.Request){
+        err := r.ParseForm()
+        if err != nil {
+            log.Println(err)
+            fmt.Fprintf(w, "Error: %s", err)
+        }
+        channel := r.Form.Get("channel")
+        org := r.Form.Get("org")
+
+        contract, err := GetContract(wallet, chaincodeName, org, channel)
+        if err != nil{
+            log.Println(err)
+            fmt.Fprintf(w, "Error: %s", err)
+            return
+        }
+
+        result, err := contract.EvaluateTransaction("GetAllUsers")
+        if err != nil {
+            log.Println(err)
+            fmt.Fprintf(w, "Error: %s", err)
+        }
+
+        json, err := Json(result)
+        if err != nil {
+            log.Println(err)
+            fmt.Fprintf(w, "Error: %s", err)
+        }
+
+        log.Println("Users queried.")
+        fmt.Fprintf(w, json)
+    })
+
+    http.HandleFunc("/api/get/banks", func(w http.ResponseWriter, r *http.Request){
+        err := r.ParseForm()
+        if err != nil {
+            log.Println(err)
+            fmt.Fprintf(w, "Error: %s", err)
+        }
+        channel := r.Form.Get("channel")
+        org := r.Form.Get("org")
+
+        contract, err := GetContract(wallet, chaincodeName, org, channel)
+        if err != nil{
+            log.Println(err)
+            fmt.Fprintf(w, "Error: %s", err)
+            return
+        }
+
+        result, err := contract.EvaluateTransaction("GetAllBanks")
+        if err != nil {
+            log.Println(err)
+            fmt.Fprintf(w, "Error: %s", err)
+        }
+
+        json, err := Json(result)
+        if err != nil {
+            log.Println(err)
+            fmt.Fprintf(w, "Error: %s", err)
+        }
+
+        log.Println("Banks queried.")
+        fmt.Fprintf(w, json)
+    })
+
+    http.HandleFunc("/api/get/accounts", func(w http.ResponseWriter, r *http.Request){
+        err := r.ParseForm()
+        if err != nil {
+            log.Println(err)
+            fmt.Fprintf(w, "Error: %s", err)
+        }
+        channel := r.Form.Get("channel")
+        org := r.Form.Get("org")
+
+        contract, err := GetContract(wallet, chaincodeName, org, channel)
+        if err != nil{
+            log.Println(err)
+            fmt.Fprintf(w, "Error: %s", err)
+            return
+        }
+
+        result, err := contract.EvaluateTransaction("GetAllAccounts")
+        if err != nil {
+            log.Println(err)
+            fmt.Fprintf(w, "Error: %s", err)
+        }
+
+        json, err := Json(result)
+        if err != nil {
+            log.Println(err)
+            fmt.Fprintf(w, "Error: %s", err)
+        }
+
+        log.Println("Accounts queried.")
+        fmt.Fprintf(w, json)
+    })
 
     fmt.Println("Server is running on http://localhost:8080")
     log.Fatal(http.ListenAndServe(":8080", nil))

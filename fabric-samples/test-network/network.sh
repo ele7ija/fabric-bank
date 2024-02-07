@@ -394,7 +394,7 @@ CC_END_POLICY="NA"
 # collection configuration defaults to "NA"
 CC_COLL_CONFIG="NA"
 # chaincode init function defaults to "NA"
-CC_INIT_FCN="InitLedger" #CC_INIT_FCN="InitLedger" #CC_INIT_FCN="NA" 
+CC_INIT_FCN="NA" # CC_INIT_FCN="InitLedger"
 # use this as the default docker-compose yaml definition
 COMPOSE_FILE_BASE=docker/docker-compose-test-net.yaml
 # docker-compose.yaml file if you are using couchdb
