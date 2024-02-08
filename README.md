@@ -9,7 +9,109 @@ Autori:
 
 ## Pokretanje
 
-### POTREBNO KORISTITI GO 1.14
+Pokretanje ima dva dela:
+1. Podizanje mreze i instalacija chaincode-a
+2. Klijentska interakcija sa chaincode-om
+
+### 1. Podizanje mreze
+```
+# Preuzmi potrebne Hyperledger fabric docker slike i preuzmi binarne fajlove i
+# prebaci ih u ./fabric-samples/bin i ./fabric-samples/config.
+./install-fabric.sh --fabric-version 2.2.6
+
+# Spusti prethodno podignutu mrezu i podigni novu sa 4 organizacije sa po 4
+# peer-a.
+cd ./fabric-samples/test-network
+./network.sh down
+./network.sh up
+
+# Kreiranje kanala.
+./network.sh createChannel
+
+# Deployment chaincode-a.
+./network.sh deployCC -ccn basic -ccp ../../chaincode/init/ -ccl go
+```
+
+### 2a. Interakcija pomocu SDK-a (custom klijenta) kroz REST API
+
+```bash
+# Pokrenuti REST API server
+cd ../../app
+go run main.go
+```
+
+Primer pozivanja REST endpoint-a:
+
+```bash
+$ curl "localhost:8080/api/login?username=user1&password=user1&bank=bank1"                                                                                                              
+{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJiYW5rIjoiYmFuazEiLCJ1c2VybmFtZSI6InVzZXIxIn0.e9RVH1J5AgZ2MlEiK5gQfon9UOPDVhiToghj4TAvCo0"}
+
+$ curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJiYW5rIjoiYmFuazEiLCJ1c2VybmFtZSI6InVzZXIxIn0.e9RVH1J5AgZ2MlEiK5gQfon9UOPDVhiToghj4TAvCo0" "localhost:8080/api/profile"
+{
+        "id": "user1",
+        "email": "nmalinovic@gmail.com",
+        "accounts": [
+                {
+                        "id": "account1",
+                        "amount": 17000,
+                        "currency": "RSD"
+                },
+                {
+                        "id": "account2",
+                        "amount": 517.0696235806608,
+                        "currency": "EUR"
+                }
+        ]
+}
+
+$ curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJiYW5rIjoiYmFuazEiLCJ1c2VybmFtZSI6InVzZXIxIn0.e9RVH1J5AgZ2MlEiK5gQfon9UOPDVhiToghj4TAvCo0" "localhost:8080/api/deposit?amount=1000&accountId=account1"
+Successfully deposited money.
+
+$ curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJiYW5rIjoiYmFuazEiLCJ1c2VybmFtZSI6InVzZXIxIn0.e9RVH1J5AgZ2MlEiK5gQfon9UOPDVhiToghj4TAvCo0" "localhost:8080/api/profile"
+{
+        "id": "user1",
+        "email": "nmalinovic@gmail.com",
+        "accounts": [
+                {
+                        "id": "account1",
+                        "amount": 18000,
+                        "currency": "RSD"
+                },
+                {
+                        "id": "account2",
+                        "amount": 517.0696235806608,
+                        "currency": "EUR"
+                }
+        ]
+}
+
+$ curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJiYW5rIjoiYmFuazEiLCJ1c2VybmFtZSI6InVzZXIxIn0.e9RVH1J5AgZ2MlEiK5gQfon9UOPDVhiToghj4TAvCo0" "localhost:8080/api/transfer?amount=2000&accountFrom=account1&accountTo=account2"
+
+$ curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJiYW5rIjoiYmFuazEiLCJ1c2VybmFtZSI6InVzZXIxIn0.e9RVH1J5AgZ2MlEiK5gQfon9UOPDVhiToghj4TAvCo0" "localhost:8080/api/profile"
+{
+        "id": "user1",
+        "email": "nmalinovic@gmail.com",
+        "accounts": [
+                {
+                        "id": "account1",
+                        "amount": 16000,
+                        "currency": "RSD"
+                },
+                {
+                        "id": "account2",
+                        "amount": 534.1392471613217,
+                        "currency": "EUR"
+                }
+        ]
+}
+
+$ curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJiYW5rIjoiYmFuazEiLCJ1c2VybmFtZSI6InVzZXIxIn0.e9RVH1J5AgZ2MlEiK5gQfon9UOPDVhiToghj4TAvCo0" "localhost:8080/api/transfer?amount=1000&accountFrom=account1&accountTo=account35"
+Account account1 or account35 does not belong to you, user user1!
+```
+
+### 2b. Interakcija pomocu Hyperledger alata
+
+Koristiti Go 1.14!
 
 ```bash
 sudo apt-get install bison
@@ -77,3 +179,5 @@ peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.exa
 peer chaincode query -C mychannel -n basic -c '{"Args":["GetAllAccounts"]}'
 peer chaincode query -C mychannel -n basic -c '{"Args":["GetAllUsers"]}'
 ```
+
+

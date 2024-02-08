@@ -215,6 +215,29 @@ type User struct {
 	Receipts []string
 }
 
+type ProfileAccount struct {
+	Id       string  `json:"id"`
+	Amount   float64 `json:"amount"`
+	Currency string  `json:"currency"`
+}
+
+type Profile struct {
+	Id       string           `json:"id"`
+	Email    string           `json:"email"`
+	Accounts []ProfileAccount `json:"accounts"`
+}
+
+type Account struct {
+	AccountId string
+	Amount    float64
+	Currency  string
+	Cards     []Card
+}
+
+type Card struct {
+	CardId string
+}
+
 func main() {
 	os.Setenv("DISCOVERY_AS_LOCALHOST", "true")
 	wallet, err := gateway.NewFileSystemWallet("wallet")
@@ -451,11 +474,36 @@ func main() {
 			fmt.Fprintf(w, "You have to supply amount param")
 			return
 		}
-		// TODO check that account belongs to user.
 		contract, err := GetContract(wallet, chaincodeName, getOrgFromBank(claims.Get(BANK_CLAIM)), CHANNEL)
 		if err != nil {
 			log.Println(err)
 			fmt.Fprintf(w, "Error: %s", err)
+			return
+		}
+		username := claims.Get(USERNAME_CLAIM)
+		result, err := contract.EvaluateTransaction("GetUser", username)
+		if err != nil {
+			w.WriteHeader(404)
+			fmt.Fprintf(w, "User not found: %s", err)
+			return
+		}
+		user := &User{}
+		err = json.Unmarshal(result, user)
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(500)
+			return
+		}
+		flag := false
+		for _, account := range user.Receipts {
+			if account == accountId {
+				flag = true
+				break
+			}
+		}
+		if !flag {
+			w.WriteHeader(403)
+			fmt.Fprintf(w, "Account: %s does not belong to you, user %s!", accountId, username)
 			return
 		}
 
@@ -494,11 +542,36 @@ func main() {
 			fmt.Fprintf(w, "You have to supply amount param")
 			return
 		}
-		// TODO check that account belongs to user.
 		contract, err := GetContract(wallet, chaincodeName, getOrgFromBank(claims.Get(BANK_CLAIM)), CHANNEL)
 		if err != nil {
 			log.Println(err)
 			fmt.Fprintf(w, "Error: %s", err)
+			return
+		}
+		username := claims.Get(USERNAME_CLAIM)
+		result, err := contract.EvaluateTransaction("GetUser", username)
+		if err != nil {
+			w.WriteHeader(404)
+			fmt.Fprintf(w, "User not found: %s", err)
+			return
+		}
+		user := &User{}
+		err = json.Unmarshal(result, user)
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(500)
+			return
+		}
+		flag := false
+		for _, account := range user.Receipts {
+			if account == accountId {
+				flag = true
+				break
+			}
+		}
+		if !flag {
+			w.WriteHeader(403)
+			fmt.Fprintf(w, "Account: %s does not belong to you, user %s!", accountId, username)
 			return
 		}
 
@@ -543,11 +616,42 @@ func main() {
 			fmt.Fprintf(w, "You have to supply amount param")
 			return
 		}
-		// TODO check that account belongs to user.
 		contract, err := GetContract(wallet, chaincodeName, getOrgFromBank(claims.Get(BANK_CLAIM)), CHANNEL)
 		if err != nil {
 			log.Println(err)
 			fmt.Fprintf(w, "Error: %s", err)
+			return
+		}
+		username := claims.Get(USERNAME_CLAIM)
+		result, err := contract.EvaluateTransaction("GetUser", username)
+		if err != nil {
+			w.WriteHeader(404)
+			fmt.Fprintf(w, "User not found: %s", err)
+			return
+		}
+		user := &User{}
+		err = json.Unmarshal(result, user)
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(500)
+			return
+		}
+		flagFrom := false
+		flagTo := false
+		for _, account := range user.Receipts {
+			if account == accountFrom {
+				flagFrom = true
+			}
+			if account == accountTo {
+				flagTo = true
+			}
+			if flagFrom && flagTo {
+				break
+			}
+		}
+		if !flagFrom || !flagTo {
+			w.WriteHeader(403)
+			fmt.Fprintf(w, "Account %s or %s does not belong to you, user %s!", accountFrom, accountTo, username)
 			return
 		}
 
@@ -559,6 +663,68 @@ func main() {
 		}
 
 		fmt.Fprintf(w, "Successfully transferred %s from account %s to %s.", amount, accountFrom, accountTo)
+	})
+
+	http.HandleFunc("/api/profile", func(w http.ResponseWriter, r *http.Request) {
+		claims, err := checkLoggedIn(r)
+		if err != nil {
+			w.WriteHeader(403)
+			fmt.Fprintf(w, "You have to be authorized")
+			return
+		}
+		contract, err := GetContract(wallet, chaincodeName, getOrgFromBank(claims.Get(BANK_CLAIM)), CHANNEL)
+		if err != nil {
+			log.Println(err)
+			fmt.Fprintf(w, "Error: %s", err)
+			return
+		}
+		username := claims.Get(USERNAME_CLAIM)
+		result, err := contract.EvaluateTransaction("GetUser", username)
+		if err != nil {
+			w.WriteHeader(404)
+			fmt.Fprintf(w, "User not found: %s", err)
+			return
+		}
+		user := &User{}
+		err = json.Unmarshal(result, user)
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(500)
+			return
+		}
+		profile := &Profile{
+			Id:       user.UserId,
+			Email:    user.Email,
+			Accounts: make([]ProfileAccount, 0, len(user.Receipts)),
+		}
+		for _, account := range user.Receipts {
+			result, err := contract.EvaluateTransaction("GetAccount", account)
+			if err != nil {
+				w.WriteHeader(404)
+				fmt.Fprintf(w, "User not found: %s", err)
+				return
+			}
+			acc := &Account{}
+			err = json.Unmarshal(result, acc)
+			if err != nil {
+				fmt.Println(err)
+				w.WriteHeader(500)
+				return
+			}
+			profile.Accounts = append(profile.Accounts, ProfileAccount{
+				Id:       acc.AccountId,
+				Amount:   acc.Amount,
+				Currency: acc.Currency,
+			})
+		}
+		res, err := json.MarshalIndent(profile, "", "\t")
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(500)
+			return
+		}
+
+		w.Write(res)
 	})
 
 	fmt.Println("Server is running on http://localhost:8080")
