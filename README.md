@@ -64,7 +64,7 @@ $ curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJiYW5rIj
         ]
 }
 
-$ curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJiYW5rIjoiYmFuazEiLCJ1c2VybmFtZSI6InVzZXIxIn0.e9RVH1J5AgZ2MlEiK5gQfon9UOPDVhiToghj4TAvCo0" "localhost:8080/api/deposit?amount=1000&accountId=account1"
+$ curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJiYW5rIjoiYmFuazEiLCJ1c2VybmFtZSI6InVzZXIxIn0.e9RVH1J5AgZ2MlEiK5gQfon9UOPDVhiToghj4TAvCo0" "localhost:8080/api/deposit?amount=1000&accountId=account1&currency=RSD"
 Successfully deposited money.
 
 $ curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJiYW5rIjoiYmFuazEiLCJ1c2VybmFtZSI6InVzZXIxIn0.e9RVH1J5AgZ2MlEiK5gQfon9UOPDVhiToghj4TAvCo0" "localhost:8080/api/profile"
@@ -105,8 +105,6 @@ $ curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJiYW5rIj
         ]
 }
 
-$ curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJiYW5rIjoiYmFuazEiLCJ1c2VybmFtZSI6InVzZXIxIn0.e9RVH1J5AgZ2MlEiK5gQfon9UOPDVhiToghj4TAvCo0" "localhost:8080/api/transfer?amount=1000&accountFrom=account1&accountTo=account35"
-Account account1 or account35 does not belong to you, user user1!
 ```
 
 ### 2b. Interakcija pomocu Hyperledger alata
