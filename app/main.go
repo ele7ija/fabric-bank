@@ -23,6 +23,12 @@ var (
 	SECRET = []byte("my_secret")
 )
 
+const (
+	CHANNEL        = "mychannel"
+	USERNAME_CLAIM = "username"
+	BANK_CLAIM     = "bank"
+)
+
 func Json(jsonData []byte) (string, error) {
 	var prettyJSON bytes.Buffer
 
@@ -144,40 +150,69 @@ func GetContract(wallet *gateway.Wallet, chaincodeName string, org string, chann
 
 type Claims map[string]interface{}
 
-func checkLoggedIn(r *http.Request) (string, error) {
+func (c Claims) Get(item string) string {
+	if _, ok := c[item]; !ok {
+		return ""
+	}
+	return c[item].(string)
+}
+
+func checkLoggedIn(r *http.Request) (Claims, error) {
 	var tokenStr string
 	fmt.Println("Got auth: ", r.Header["Authorization"])
 	if tokenArr, ok := r.Header["Authorization"]; !ok {
-		return "", fmt.Errorf("token isn't provided")
+		return nil, fmt.Errorf("token isn't provided")
 	} else {
 		tokenStr = strings.Split(tokenArr[0], " ")[1]
 	}
 	token := strings.Split(tokenStr, ".")
 	if len(token) != 3 {
-		return "", fmt.Errorf("bad token")
+		return nil, fmt.Errorf("bad token")
 	}
 	mac := hmac.New(sha256.New, SECRET)
 	mac.Write([]byte(fmt.Sprintf("%s.%s", token[0], token[1])))
 	sig, _ := base64.RawURLEncoding.DecodeString(token[2])
 	if !hmac.Equal(sig, mac.Sum(nil)) {
-		return "", fmt.Errorf("bad hash")
+		return nil, fmt.Errorf("bad hash")
 	}
 	claimsByte, err := base64.RawURLEncoding.DecodeString(token[1])
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	var claims Claims
 	err = json.Unmarshal(claimsByte, &claims)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return claims["username"].(string), nil
+	return claims, nil
 }
 
 type loginResponse struct {
 	Token string `json:"token"`
+}
+
+func getOrgFromBank(bank string) string {
+	switch bank {
+	case "bank1":
+		return "org1"
+	case "bank2":
+		return "org2"
+	case "bank3":
+		return "org3"
+	default:
+		return "org4"
+	}
+}
+
+type User struct {
+	UserId   string
+	Password string
+	Name     string
+	LastName string
+	Email    string
+	Receipts []string
 }
 
 func main() {
@@ -205,13 +240,46 @@ func main() {
 			w.Write([]byte(err.Error()))
 			return
 		}
+		bankId := r.Form.Get("bank")
 		username := r.Form.Get("username")
-		fmt.Println("username:", username)
-		// password := r.Form.Get("password")
-		// TODO check exists
-		// Encode header and claims
+		password := r.Form.Get("password")
+		if bankId == "" || username == "" || password == "" {
+			w.WriteHeader(400)
+			fmt.Fprintf(w, "You have to supply bank, username and password")
+			return
+		}
+		fmt.Printf("username: %s, pass: %s, bank: %s\n", username, password, bankId)
+
+		org := getOrgFromBank(bankId)
+		fmt.Println(org, chaincodeName)
+		contract, err := GetContract(wallet, chaincodeName, org, CHANNEL)
+		if err != nil {
+			log.Println(err)
+			fmt.Fprintf(w, "Error: %s", err)
+			return
+		}
+		result, err := contract.EvaluateTransaction("GetUser", username)
+		if err != nil {
+			w.WriteHeader(404)
+			fmt.Fprintf(w, "User not found: %s", err)
+			return
+		}
+		user := &User{}
+		err = json.Unmarshal(result, user)
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(500)
+			return
+		}
+		if user.Password != password {
+			w.WriteHeader(403)
+			w.Write([]byte("Bad password"))
+			return
+		}
+
 		var c Claims = map[string]interface{}{}
-		c["username"] = username
+		c[USERNAME_CLAIM] = username
+		c[BANK_CLAIM] = bankId
 		headerEnc, _ := json.Marshal(map[string]string{"typ": "JWT", "alg": "HS256"})
 		claimsEnc, _ := json.Marshal(c)
 		jwtStr := fmt.Sprintf(
@@ -356,6 +424,141 @@ func main() {
 
 		log.Println("Accounts queried.")
 		fmt.Fprintf(w, json)
+	})
+
+	http.HandleFunc("/api/deposit", func(w http.ResponseWriter, r *http.Request) {
+		claims, err := checkLoggedIn(r)
+		if err != nil {
+			w.WriteHeader(403)
+			fmt.Fprintf(w, "You have to be authorized")
+			return
+		}
+		fmt.Printf("User %s is depositing money.\n", claims.Get(USERNAME_CLAIM))
+		err = r.ParseForm()
+		if err != nil {
+			log.Println(err)
+			fmt.Fprintf(w, "Error: %s", err)
+		}
+		accountId := r.Form.Get("accountId")
+		if accountId == "" {
+			w.WriteHeader(400)
+			fmt.Fprintf(w, "You have to supply accountId param")
+			return
+		}
+		amount := r.Form.Get("amount")
+		if amount == "" {
+			w.WriteHeader(400)
+			fmt.Fprintf(w, "You have to supply amount param")
+			return
+		}
+		// TODO check that account belongs to user.
+		contract, err := GetContract(wallet, chaincodeName, getOrgFromBank(claims.Get(BANK_CLAIM)), CHANNEL)
+		if err != nil {
+			log.Println(err)
+			fmt.Fprintf(w, "Error: %s", err)
+			return
+		}
+
+		_, err = contract.SubmitTransaction("DepositMoney", accountId, amount)
+		if err != nil {
+			log.Println(err)
+			fmt.Fprintf(w, "Error: %s", err)
+			return
+		}
+
+		fmt.Fprintf(w, "Successfully deposited money.")
+	})
+
+	http.HandleFunc("/api/withdraw", func(w http.ResponseWriter, r *http.Request) {
+		claims, err := checkLoggedIn(r)
+		if err != nil {
+			w.WriteHeader(403)
+			fmt.Fprintf(w, "You have to be authorized")
+			return
+		}
+		fmt.Printf("User %s is depositing money.\n", claims.Get(USERNAME_CLAIM))
+		err = r.ParseForm()
+		if err != nil {
+			log.Println(err)
+			fmt.Fprintf(w, "Error: %s", err)
+		}
+		accountId := r.Form.Get("accountId")
+		if accountId == "" {
+			w.WriteHeader(400)
+			fmt.Fprintf(w, "You have to supply accountId param")
+			return
+		}
+		amount := r.Form.Get("amount")
+		if amount == "" {
+			w.WriteHeader(400)
+			fmt.Fprintf(w, "You have to supply amount param")
+			return
+		}
+		// TODO check that account belongs to user.
+		contract, err := GetContract(wallet, chaincodeName, getOrgFromBank(claims.Get(BANK_CLAIM)), CHANNEL)
+		if err != nil {
+			log.Println(err)
+			fmt.Fprintf(w, "Error: %s", err)
+			return
+		}
+
+		_, err = contract.SubmitTransaction("WithdrawMoney", accountId, amount)
+		if err != nil {
+			log.Println(err)
+			fmt.Fprintf(w, "Error: %s", err)
+			return
+		}
+
+		fmt.Fprintf(w, "Successfully withdrew money.")
+	})
+
+	http.HandleFunc("/api/transfer", func(w http.ResponseWriter, r *http.Request) {
+		claims, err := checkLoggedIn(r)
+		if err != nil {
+			w.WriteHeader(403)
+			fmt.Fprintf(w, "You have to be authorized")
+			return
+		}
+		fmt.Printf("User %s is transferring money.\n", claims.Get(USERNAME_CLAIM))
+		err = r.ParseForm()
+		if err != nil {
+			log.Println(err)
+			fmt.Fprintf(w, "Error: %s", err)
+		}
+		accountFrom := r.Form.Get("accountFrom")
+		if accountFrom == "" {
+			w.WriteHeader(400)
+			fmt.Fprintf(w, "You have to supply accountFrom param")
+			return
+		}
+		accountTo := r.Form.Get("accountTo")
+		if accountTo == "" {
+			w.WriteHeader(400)
+			fmt.Fprintf(w, "You have to supply accountTo param")
+			return
+		}
+		amount := r.Form.Get("amount")
+		if amount == "" {
+			w.WriteHeader(400)
+			fmt.Fprintf(w, "You have to supply amount param")
+			return
+		}
+		// TODO check that account belongs to user.
+		contract, err := GetContract(wallet, chaincodeName, getOrgFromBank(claims.Get(BANK_CLAIM)), CHANNEL)
+		if err != nil {
+			log.Println(err)
+			fmt.Fprintf(w, "Error: %s", err)
+			return
+		}
+
+		_, err = contract.SubmitTransaction("TransferMoney", accountFrom, accountTo, amount)
+		if err != nil {
+			log.Println(err)
+			fmt.Fprintf(w, "Error: %s", err)
+			return
+		}
+
+		fmt.Fprintf(w, "Successfully transferred %s from account %s to %s.", amount, accountFrom, accountTo)
 	})
 
 	fmt.Println("Server is running on http://localhost:8080")

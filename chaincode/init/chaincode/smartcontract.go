@@ -24,6 +24,7 @@ type Bank struct {
 
 type User struct {
 	UserId   string
+	Password string
 	Name     string
 	LastName string
 	Email    string
@@ -192,6 +193,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 	users := []User{
 		{
 			UserId:   "user1",
+			Password: "user1",
 			Name:     "Nikola",
 			LastName: "Malinovic",
 			Email:    "nmalinovic@gmail.com",
@@ -199,6 +201,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 		},
 		{
 			UserId:   "user2",
+			Password: "user2",
 			Name:     "Igor",
 			LastName: "Tot",
 			Email:    "itot@gmail.com",
@@ -206,6 +209,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 		},
 		{
 			UserId:   "user3",
+			Password: "user3",
 			Name:     "Jelena",
 			LastName: "Petrovic",
 			Email:    "jpetrovic@gmail.com",
@@ -213,6 +217,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 		},
 		{
 			UserId:   "user4",
+			Password: "user4",
 			Name:     "Petar",
 			LastName: "Djukic",
 			Email:    "pdjukic@gmail.com",
@@ -220,6 +225,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 		},
 		{
 			UserId:   "user5",
+			Password: "user5",
 			Name:     "Nikolina",
 			LastName: "Vukovic",
 			Email:    "nvukovic@gmail.com",
@@ -228,6 +234,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 		{
 
 			UserId:   "user6",
+			Password: "user6",
 			Name:     "Nenad",
 			LastName: "Obradovic",
 			Email:    "nobradovic@gmail.com",
@@ -235,6 +242,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 		},
 		{
 			UserId:   "user7",
+			Password: "user7",
 			Name:     "Ognjen",
 			LastName: "Zalis",
 			Email:    "ozalis@gmail.com",
@@ -242,6 +250,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 		},
 		{
 			UserId:   "user8",
+			Password: "user8",
 			Name:     "Milan",
 			LastName: "Kovacevic",
 			Email:    "mkovacevic@gmail.com",
@@ -249,6 +258,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 		},
 		{
 			UserId:   "user9",
+			Password: "user9",
 			Name:     "Ksenija",
 			LastName: "Jovancevic",
 			Email:    "kjovancevic@gmail.com",
@@ -256,6 +266,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 		},
 		{
 			UserId:   "user10",
+			Password: "user10",
 			Name:     "Milica",
 			LastName: "Simovic",
 			Email:    "msimovic@gmail.com",
@@ -263,6 +274,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 		},
 		{
 			UserId:   "user11",
+			Password: "user11",
 			Name:     "Luka",
 			LastName: "Dragovic",
 			Email:    "ldragovic@gmail.com",
@@ -270,6 +282,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 		},
 		{
 			UserId:   "user12",
+			Password: "user12",
 			Name:     "Vanja",
 			LastName: "Tanovic",
 			Email:    "vtanovic@gmail.com",
@@ -349,7 +362,6 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 			return fmt.Errorf("failed to put to world state. %v", err)
 		}
 	}
-
 
 	return nil
 }
@@ -499,7 +511,7 @@ func (s *SmartContract) DepositMoney(ctx contractapi.TransactionContextInterface
 		return err
 	}
 	account.Amount += amount
-	accountJSON, err = json.Marshal(account)
+	accountJSON, err = json.Marshal(&account)
 	if err != nil {
 		return err
 	}
@@ -554,12 +566,12 @@ func (s *SmartContract) CreateUser(ctx contractapi.TransactionContextInterface, 
 			max = num
 		}
 	}
-	bank, err := getBank(ctx, bankId)
+	bank, err := GetBank(ctx, bankId)
 	if err != nil {
 		return err
 	}
 	for _, userId := range bank.Users {
-		user, err := getUser(ctx, userId)
+		user, err := s.GetUser(ctx, userId)
 		if err != nil {
 			return nil
 		}
@@ -621,7 +633,7 @@ func (s *SmartContract) CreateAccount(ctx contractapi.TransactionContextInterfac
 		Amount:    0,
 		Cards:     []Card{Card{CardId: fmt.Sprintf("card%d", max_card+1)}, Card{fmt.Sprintf("card%d", max_card+2)}},
 	}
-	user, err := getUser(ctx, userId)
+	user, err := s.GetUser(ctx, userId)
 	if err != nil {
 		return nil
 	}
@@ -673,7 +685,7 @@ func putUser(ctx contractapi.TransactionContextInterface, user *User) error {
 	return nil
 }
 
-func getBank(ctx contractapi.TransactionContextInterface, id string) (*Bank, error) {
+func GetBank(ctx contractapi.TransactionContextInterface, id string) (*Bank, error) {
 	bankJSON, err := ctx.GetStub().GetState(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from world state: %v", err)
@@ -689,7 +701,7 @@ func getBank(ctx contractapi.TransactionContextInterface, id string) (*Bank, err
 	return &bank, nil
 }
 
-func getUser(ctx contractapi.TransactionContextInterface, id string) (*User, error) {
+func (s *SmartContract) GetUser(ctx contractapi.TransactionContextInterface, id string) (*User, error) {
 	userJSON, err := ctx.GetStub().GetState(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from world state: %v", err)
