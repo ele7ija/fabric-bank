@@ -524,7 +524,7 @@ func (s *SmartContract) DepositMoney(ctx contractapi.TransactionContextInterface
 	return nil
 }
 
-func (s *SmartContract) TransferMoney(ctx contractapi.TransactionContextInterface, accountFromId string, accountToId string, amount float64) error {
+func (s *SmartContract) TransferMoney(ctx contractapi.TransactionContextInterface, accountFromId string, accountToId string, amount float64, allowCrossCurrency bool) error {
 	accountFrom, err := s.GetAccount(ctx, accountFromId)
 	if err != nil {
 		return err
@@ -538,6 +538,9 @@ func (s *SmartContract) TransferMoney(ctx contractapi.TransactionContextInterfac
 	}
 	amount_to := amount
 	if accountFrom.Currency != accountTo.Currency {
+		if !allowCrossCurrency {
+			return fmt.Errorf("Accounts do not have same currencies, and transfer between currencies has not been authorized")
+		}
 		amount_to, err = TransferAmountToCurrency(amount, accountFrom.Currency, accountTo.Currency)
 		if err != nil {
 			return fmt.Errorf("Invalid currency")
@@ -815,6 +818,9 @@ func (s *SmartContract) GetUsersWithMoreResources(ctx contractapi.TransactionCon
 		}
 		accounts = append(accounts, account)
 	}
+	if len(accounts) == 0 {
+		return []*UserWithAccounts{}, nil
+	}
 
 	accountConditions := []string{}
 	for _, acc := range accounts {
@@ -835,7 +841,7 @@ func (s *SmartContract) GetUsersWithMoreResources(ctx contractapi.TransactionCon
 				}
 			]
 		}
-	}`, strings.Join(accountConditions, "\n"))
+	}`, strings.Join(accountConditions, ",\n"))
 	usersQueryIterator, err := ctx.GetStub().GetQueryResult(usersQuery)
 	if err != nil {
 		return nil, fmt.Errorf("error executing users query: %v", err)
@@ -869,6 +875,7 @@ func (s *SmartContract) GetUsersWithMoreResources(ctx contractapi.TransactionCon
 				}
 			}
 		}
+		retVal = append(retVal, &userWithAccounts)
 	}
 	return retVal, nil
 }
