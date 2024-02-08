@@ -475,7 +475,33 @@ func (s *SmartContract) GetAccount(ctx contractapi.TransactionContextInterface, 
 	return &account, nil
 }
 
-func (s *SmartContract) WithdrawMoney(ctx contractapi.TransactionContextInterface, accountId string, amount float64, currency string) error {
+func (s *SmartContract) WithdrawMoney(ctx contractapi.TransactionContextInterface, accountId string, amount float64) error {
+	exists, err := s.AssetExists(ctx, accountId)
+	if !exists {
+		return fmt.Errorf("Account does not exist")
+	}
+	accountJSON, err := ctx.GetStub().GetState(accountId)
+	if err != nil {
+		return fmt.Errorf("failed to read from world state: %v", err)
+	}
+	var account Account
+	err = json.Unmarshal(accountJSON, &account)
+	if err != nil {
+		return err
+	}
+	if account.Amount < amount {
+		return fmt.Errorf("Account does not have that amount of money")
+	}
+	account.Amount -= amount
+	accountJSON, err = json.Marshal(account)
+	if err != nil {
+		return err
+	}
+	ctx.GetStub().PutState(account.AccountId, accountJSON)
+	return nil
+}
+
+func (s *SmartContract) DepositMoney(ctx contractapi.TransactionContextInterface, accountId string, amount float64, currency string) error {
 	exists, err := s.AssetExists(ctx, accountId)
 	if !exists {
 		return fmt.Errorf("Account does not exist")
@@ -491,32 +517,6 @@ func (s *SmartContract) WithdrawMoney(ctx contractapi.TransactionContextInterfac
 	}
 	if account.Currency != currency {
 		return fmt.Errorf("Account is not of the given currency")
-	}
-	if account.Amount < amount {
-		return fmt.Errorf("Account does not have that amount of money")
-	}
-	account.Amount -= amount
-	accountJSON, err = json.Marshal(account)
-	if err != nil {
-		return err
-	}
-	ctx.GetStub().PutState(account.AccountId, accountJSON)
-	return nil
-}
-
-func (s *SmartContract) DepositMoney(ctx contractapi.TransactionContextInterface, accountId string, amount float64) error {
-	exists, err := s.AssetExists(ctx, accountId)
-	if !exists {
-		return fmt.Errorf("Account does not exist")
-	}
-	accountJSON, err := ctx.GetStub().GetState(accountId)
-	if err != nil {
-		return fmt.Errorf("failed to read from world state: %v", err)
-	}
-	var account Account
-	err = json.Unmarshal(accountJSON, &account)
-	if err != nil {
-		return err
 	}
 	account.Amount += amount
 	accountJSON, err = json.Marshal(&account)
@@ -562,7 +562,7 @@ func (s *SmartContract) TransferMoney(ctx contractapi.TransactionContextInterfac
 	return nil
 }
 
-func (s *SmartContract) CreateUser(ctx contractapi.TransactionContextInterface, name string, lastName string, email string, bankId string) error {
+func (s *SmartContract) CreateUser(ctx contractapi.TransactionContextInterface, name string, lastName string, email string, bankId string, password string) error {
 	users, err := s.GetAllUsers(ctx)
 	if err != nil {
 		return err
@@ -577,7 +577,7 @@ func (s *SmartContract) CreateUser(ctx contractapi.TransactionContextInterface, 
 			max = num
 		}
 	}
-	bank, err := GetBank(ctx, bankId)
+	bank, err := s.GetBank(ctx, bankId)
 	if err != nil {
 		return err
 	}
@@ -596,6 +596,7 @@ func (s *SmartContract) CreateUser(ctx contractapi.TransactionContextInterface, 
 		LastName: lastName,
 		Email:    email,
 		Receipts: []string{},
+		Password: password,
 	}
 	err = putUser(ctx, &new_user)
 	if err != nil {
@@ -636,7 +637,7 @@ func (s *SmartContract) CreateAccount(ctx contractapi.TransactionContextInterfac
 	}
 	_, ok := makeMap()[currency]
 	if !ok {
-		fmt.Errorf("Currency %s not found", currency)
+		return fmt.Errorf("Currency %s not found", currency)
 	}
 	new_account := Account{
 		AccountId: fmt.Sprintf("account%d", max_account+1),
@@ -696,7 +697,7 @@ func putUser(ctx contractapi.TransactionContextInterface, user *User) error {
 	return nil
 }
 
-func GetBank(ctx contractapi.TransactionContextInterface, id string) (*Bank, error) {
+func (s *SmartContract) GetBank(ctx contractapi.TransactionContextInterface, id string) (*Bank, error) {
 	bankJSON, err := ctx.GetStub().GetState(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from world state: %v", err)
