@@ -42,6 +42,11 @@ type Card struct {
 	CardId string
 }
 
+type UserWithAccounts struct {
+	User     User
+	Accounts []Account
+}
+
 // InitLedger adds a base set of assets to the ledger
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	accounts := []Account{
@@ -777,4 +782,93 @@ func (s *SmartContract) QueryUsers(ctx contractapi.TransactionContextInterface, 
 	}
 
 	return filteredUsers, nil
+}
+
+func (s *SmartContract) GetUsersWithMoreResources(ctx contractapi.TransactionContextInterface, amount float64, currency string) ([]*UserWithAccounts, error) {
+	currencies := makeMap()
+	_, ok := currencies[currency]
+	if !ok {
+		return nil, fmt.Errorf("Invalid currency")
+	}
+	accountsQuery := fmt.Sprintf(`{
+		"selector": {
+			"Currency": "%s",
+			"Amount": {
+				"$gte": %f
+			}
+		}
+	}`, currency, amount)
+	accountsResult, err := ctx.GetStub().GetQueryResult(accountsQuery)
+	if err != nil {
+		return nil, err
+	}
+	defer accountsResult.Close()
+	var accounts []Account
+	for accountsResult.HasNext() {
+		accountResult, err := accountsResult.Next()
+		if err != nil {
+			return nil, err
+		}
+		var account Account
+		if err := json.Unmarshal(accountResult.Value, &account); err != nil {
+			return nil, fmt.Errorf("error unmarshalling account: %v", err)
+		}
+		accounts = append(accounts, account)
+	}
+
+	accountConditions := []string{}
+	for _, acc := range accounts {
+		condition := fmt.Sprintf(`{"Receipts": {"$elemMatch": {"$eq": "%s"}}}`, acc.AccountId)
+		accountConditions = append(accountConditions, condition)
+	}
+	usersQuery := fmt.Sprintf(`
+	{
+		"selector": {
+			"$and": [
+				{
+					"$or": [
+						%s
+					]
+				},
+				{
+					"UserId": {"$regex": "^user"}
+				}
+			]
+		}
+	}`, strings.Join(accountConditions, "\n"))
+	usersQueryIterator, err := ctx.GetStub().GetQueryResult(usersQuery)
+	if err != nil {
+		return nil, fmt.Errorf("error executing users query: %v", err)
+	}
+	defer usersQueryIterator.Close()
+
+	var users []User
+	for usersQueryIterator.HasNext() {
+		queryResult, err := usersQueryIterator.Next()
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving next user query result: %v", err)
+		}
+
+		var user User
+		if err := json.Unmarshal(queryResult.Value, &user); err != nil {
+			return nil, fmt.Errorf("error unmarshalling user: %v", err)
+		}
+		users = append(users, user)
+	}
+
+	retVal := []*UserWithAccounts{}
+	for _, user := range users {
+		userWithAccounts := UserWithAccounts{
+			User:     user,
+			Accounts: []Account{},
+		}
+		for _, accId := range user.Receipts {
+			for _, account := range accounts {
+				if account.AccountId == accId {
+					userWithAccounts.Accounts = append(userWithAccounts.Accounts, account)
+				}
+			}
+		}
+	}
+	return retVal, nil
 }
