@@ -542,6 +542,12 @@ func main() {
 			fmt.Fprintf(w, "You have to supply amount param")
 			return
 		}
+		currency := r.Form.Get("currency")
+		if currency == "" {
+			w.WriteHeader(400)
+			fmt.Fprintf(w, "You have to supply currency param")
+			return
+		}
 		contract, err := GetContract(wallet, chaincodeName, getOrgFromBank(claims.Get(BANK_CLAIM)), CHANNEL)
 		if err != nil {
 			log.Println(err)
@@ -575,7 +581,7 @@ func main() {
 			return
 		}
 
-		_, err = contract.SubmitTransaction("WithdrawMoney", accountId, amount)
+		_, err = contract.SubmitTransaction("WithdrawMoney", accountId, amount, currency)
 		if err != nil {
 			log.Println(err)
 			fmt.Fprintf(w, "Error: %s", err)
@@ -616,6 +622,10 @@ func main() {
 			fmt.Fprintf(w, "You have to supply amount param")
 			return
 		}
+		convert := r.Form.Get("convert")
+		if convert != "true" {
+			convert = "false"
+		}
 		contract, err := GetContract(wallet, chaincodeName, getOrgFromBank(claims.Get(BANK_CLAIM)), CHANNEL)
 		if err != nil {
 			log.Println(err)
@@ -655,7 +665,7 @@ func main() {
 			return
 		}
 
-		_, err = contract.SubmitTransaction("TransferMoney", accountFrom, accountTo, amount)
+		_, err = contract.SubmitTransaction("TransferMoney", accountFrom, accountTo, amount, convert)
 		if err != nil {
 			log.Println(err)
 			fmt.Fprintf(w, "Error: %s", err)

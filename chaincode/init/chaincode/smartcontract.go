@@ -475,7 +475,7 @@ func (s *SmartContract) GetAccount(ctx contractapi.TransactionContextInterface, 
 	return &account, nil
 }
 
-func (s *SmartContract) WithdrawMoney(ctx contractapi.TransactionContextInterface, accountId string, amount float64) error {
+func (s *SmartContract) WithdrawMoney(ctx contractapi.TransactionContextInterface, accountId string, amount float64, currency string) error {
 	exists, err := s.AssetExists(ctx, accountId)
 	if !exists {
 		return fmt.Errorf("Account does not exist")
@@ -488,6 +488,9 @@ func (s *SmartContract) WithdrawMoney(ctx contractapi.TransactionContextInterfac
 	err = json.Unmarshal(accountJSON, &account)
 	if err != nil {
 		return err
+	}
+	if account.Currency != currency {
+		return fmt.Errorf("Account is not of the given currency")
 	}
 	if account.Amount < amount {
 		return fmt.Errorf("Account does not have that amount of money")
