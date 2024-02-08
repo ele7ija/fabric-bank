@@ -178,6 +178,17 @@ peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.exa
 
 peer chaincode query -C mychannel -n basic -c '{"Args":["GetAllAccounts"]}'
 peer chaincode query -C mychannel -n basic -c '{"Args":["GetAllUsers"]}'
+
+peer chaincode query -C mychannel -n basic -c '{"Args":["QueryUsers", "Nikola", "", "", "1"]}'
+# Returns:
+# [{"UserId":"user1","Password":"user1","Name":"Nikola","LastName":"Malinovic","Email":"nmalinovic@gmail.com","Receipts":["account1","account2"]}]
+
+
+peer chaincode query -C mychannel -n basic -c '{"Args":["GetUsersWithMoreResources", "20000", "RSD"]}'
+# Returns:
+# [{"User":{"UserId":"user1","Password":"user1","Name":"Nikola","LastName":"Malinovic","Email":"nmalinovic@gmail.com","Receipts":["account1","account2"]},"Accounts":[{"AccountId":"account1","Amount":20000,"Currency":"RSD","Cards":[{"CardId":"card1"},{"CardId":"card2"}]}]},{"User":{"UserId":"user7","Password":"user7","Name":"Ognjen","LastName":"Zalis","Email":"ozalis@gmail.com","Receipts":["account13","account14"]},"Accounts":[{"AccountId":"account13","Amount":35000,"Currency":"RSD","Cards":[{"CardId":"card25"},{"CardId":"card26"}]}]}]
+
+
 ```
 
 
